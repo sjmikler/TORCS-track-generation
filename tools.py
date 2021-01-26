@@ -15,6 +15,7 @@ def find_results(results_dir, race_basename):
 
     exact_dir = path.join(results_dir, race_basename)
     logs = list(os.listdir(exact_dir))
+    logs = [l for l in logs if l.startswith('results')]
     latest_log = max(logs)  # max should be latest
     with open(path.join(exact_dir, latest_log), 'r') as f:
         result = f.read()
