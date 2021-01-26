@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!-- 
-	 file        : quickrace.xml
+	 file        : quickrace_template.xml
 	 created     : Sun Jan  5 11:52:32 CET 2003
 	 copyright   : (C) 2003-2014 by Eric Espie, Bernhard Wymann                         
 	 email       : Eric.Espie@torcs.org   
-	 version     : $Id: quickrace.xml,v 1.5.2.2 2014/03/19 10:41:00 berniw Exp $                                  
+	 version     : $Id: quickrace_template.xml,v 1.5.2.2 2014/03/19 10:41:00 berniw Exp $
 	 -->
 
 <!--    This program is free software; you can redistribute it and/or modify  -->
@@ -81,8 +81,6 @@
         <attnum name="idx" val="7"/>
         <attstr name="module" val="tita"/>
       </section>
-	  
-
     </section>
 
     <section name="Configuration">
