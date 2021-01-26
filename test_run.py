@@ -1,6 +1,7 @@
 import tools
 import flags
 from os import path
+import time
 import os
 
 NUM_RACES = 10
@@ -8,6 +9,8 @@ NUM_RACES = 10
 if __name__ == "__main__":
     with open(flags.RACE_CONFIG, 'r') as f:
         race_config = f.read()
+
+    t = time.time()
 
     # Create artificial configs
     xml_config_paths = []
@@ -23,3 +26,4 @@ if __name__ == "__main__":
     results = tools.run_races_read_results(xml_config_paths)
     for i, r in enumerate(results):
         print(f'{i}: {r}')
+    print("Time taken:", time.time() - t)
