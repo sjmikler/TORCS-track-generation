@@ -10,24 +10,16 @@ if __name__ == "__main__":
     with open(flags.RACE_CONFIG, 'r') as f:
         race_config = f.read()
 
-    processes = []
-    for run_idx in range(NUM_RACES):
+    # Create artificial configs
+    xml_config_paths = []
+    for idx in range(NUM_RACES):
         new_race_config_path = path.join(os.getcwd(),
                                          'temp',
-                                         f'temp_config{run_idx}.xml')
+                                         f'temp_config{idx}.xml')
         with open(new_race_config_path, 'w') as f:
             f.write(race_config)
+        xml_config_paths.append(new_race_config_path)
 
-        process = subprocess.Popen(
-            args=[flags.TORCS_EXEC, '-r', new_race_config_path],
-            cwd=flags.TORCS_DIR,
-            stderr=subprocess.PIPE,
-            stdout=subprocess.PIPE)
-        processes.append(process)
-
-    for process in processes:
-        process.wait()
-
-    for run_idx in range(NUM_RACES):
-        result = tools.find_and_read_results(flags.RESULTS_DIR, run_idx)
-        print(f'run {run_idx} result:', result)
+    # Run configured races
+    results = tools.run_races_read_results(xml_config_paths)
+    print(results)
