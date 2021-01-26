@@ -49,6 +49,8 @@ def find_read_results(results_dir, race_basename):
 
 
 def run_races_read_results(xml_config_paths):
+    """Run many races at once (multiprocessing) and output results."""
+
     processes = []
     for config_path in xml_config_paths:
         with open(config_path, 'r') as f:

@@ -1,6 +1,5 @@
 import tools
 import flags
-import subprocess
 from os import path
 import os
 
@@ -22,4 +21,5 @@ if __name__ == "__main__":
 
     # Run configured races
     results = tools.run_races_read_results(xml_config_paths)
-    print(results)
+    for i, r in enumerate(results):
+        print(f'{i}: {r}')
