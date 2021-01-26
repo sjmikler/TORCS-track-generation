@@ -6,20 +6,11 @@
 
 ### Example `flags.py`:
 
-* Windows
-
-```
-TORCS_DIR = "D:\\Games\\torcs"
-TORCS_EXEC = "D:\\Games\\torcs\\wtorcs.exe"
-RACE_CONFIG = "D:\\Games\\torcs\\config\\raceman\\quickrace.xml"
-RESULTS_DIR = "C:\\Users\\gaha\\AppData\\Local\\torcs\\results"
-```
-
 * Linux
 
 ```
-TORCS_DIR = "/home/konrad/.torcs/"
+TORCS_DIR = "/home/$USER/.torcs/"
 TORCS_EXEC = "/usr/games/torcs"
-RACE_CONFIG = "/home/konrad/.torcs/config/raceman/quickrace.xml"
-RESULTS_DIR = "/home/konrad/.torcs/results/"
+RACE_CONFIG = "/home/$USER/.torcs/config/raceman/quickrace.xml"
+RESULTS_DIR = "/home/$USER/.torcs/results/"
 ```
