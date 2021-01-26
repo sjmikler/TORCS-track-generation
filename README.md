@@ -5,9 +5,6 @@
     * if doesn't work
 
 ### Example `flags.py`:
-
-* Linux
-
 ```
 TORCS_DIR = "/home/$USER/.torcs/"
 TORCS_EXEC = "/usr/games/torcs"
