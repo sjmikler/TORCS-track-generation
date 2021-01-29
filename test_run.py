@@ -5,11 +5,11 @@ import time
 import os
 import argparse
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--num_races', type=int, default=10)
-args = parser.parse_args()
-
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--num_races', type=int, default=10)
+    args = parser.parse_args()
+
     with open(flags.RACE_CONFIG, 'r') as f:
         race_config = f.read()
 
