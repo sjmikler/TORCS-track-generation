@@ -9,6 +9,7 @@ TORCS_DIR = "/home/$USER/.torcs/"
 TORCS_EXEC = "/usr/games/torcs"
 RACE_CONFIG = "/home/$USER/.torcs/config/raceman/quickrace.xml"
 RESULTS_DIR = "/home/$USER/.torcs/results/"
+TRACKS_DIR = "/usr/local/share/games/torcs/tracks/evolution"
 ```
 
 Ignore your changes to `flags.py`, e.g. using `git update-index --assume-unchanged flags.py`.
