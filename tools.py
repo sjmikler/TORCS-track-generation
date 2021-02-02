@@ -3,6 +3,7 @@ import re
 from os import path
 import subprocess
 import flags
+import tools_bezier
 
 
 def avg(x):
@@ -37,7 +38,7 @@ def read_results(xml_result_content):
     max_dmg = max(float(t) for t in all_dmg)
     results["max_damage"] = max_dmg
     avg_dmg = avg(float(t) for t in all_dmg)
-    results["mavg_damage"] = avg_dmg
+    results["avg_damage"] = avg_dmg
 
     top_speed = re.findall(
         r'<attnum name="top speed" val="(\d+\.\d+)"/>', xml_result_content
@@ -91,3 +92,49 @@ def run_races_read_results(xml_config_paths):
         results["timeout"] = False
         all_results.append(results)
     return all_results
+
+
+def generate_configs_from_population(population):
+    with open(flags.RACE_CONFIG, "r") as f:
+        race_config = f.read()
+
+    processes = []
+    xml_config_paths = []
+    for idx, specimen in enumerate(population):
+        segments, curves = tools_bezier.get_track(specimen)
+        xml = tools_bezier.to_xml(segments, curves)
+        xml = tools_bezier.get_full_xml_track_file(xml)
+
+        new_track_path = path.join(flags.TRACKS_DIR, f"specimen{idx}")
+        if not path.exists(new_track_path):
+            os.makedirs(new_track_path)
+
+        with open(path.join(new_track_path, f"specimen{idx}.xml"), "w") as f:
+            f.write(xml)
+
+        for config_path in xml_config_paths:
+            with open(config_path, "r") as f:
+                f.read()
+
+        process = subprocess.Popen(
+            args=["trackgen", "-c", "evolution", "-n", f"specimen{idx}"],
+            stderr=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+        )
+        processes.append(process)
+
+        new_race_config = re.sub(
+            '<attstr name="name" val="NAME_PLACEHOLDER"/>',
+            f'<attstr name="name" val="specimen{idx}"/>',
+            race_config,
+        )
+
+        new_race_config_path = path.join(os.getcwd(), "temp", f"temp_config{idx}.xml")
+        with open(new_race_config_path, "w") as f:
+            f.write(new_race_config)
+        xml_config_paths.append(new_race_config_path)
+
+    for process in processes:
+        process.wait(timeout=4)
+        print("trackgen STDERR:", process.stderr.read())
+    return xml_config_paths
