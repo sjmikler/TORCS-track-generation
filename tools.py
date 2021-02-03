@@ -14,12 +14,12 @@ def avg(x):
     return sum(x) / len(x) if len(x) else 0
 
 
-def find_file(results_dir, race_basename, file_kind):
+def find_file(results_dir, race_basename):
     """Return latest xml log in folder `race_basename`"""
 
     exact_dir = path.join(results_dir, race_basename)
     logs = os.listdir(exact_dir)
-    logs = [l for l in logs if l.startswith(file_kind)]
+    logs = [l for l in logs if l.startswith("results")]
     latest_log = max(logs)  # maximal should be the latest
     with open(path.join(exact_dir, latest_log), "r") as f:
         result = f.read()
@@ -52,18 +52,18 @@ def read_results(xml_result_content):
 
 
 def find_read_results(results_dir, race_basename):
-    xml_result_content = find_file(results_dir, race_basename, "results")
+    xml_result_content = find_file(results_dir, race_basename)
     return read_results(xml_result_content)
 
 
-def read_data(data_str):
-    """Read data from the CSV file generated during the race."""
-    return pd.read_csv(data_str, index_col=False)
-
-
 def find_read_data(results_dir, race_basename):
-    data_str = find_file(results_dir, race_basename, "data")
-    return read_data(data_str)
+    """Find and read the data generated during the race"""
+    exact_dir = path.join(results_dir, race_basename)
+    logs = os.listdir(exact_dir)
+    logs = [l for l in logs if l.startswith("data")]
+    latest_log = max(logs)  # maximal should be the latest
+    data = pd.read_csv(path.join(exact_dir, latest_log), index_col=False)
+    return data
 
 
 def run_races_read_results(xml_config_paths):
