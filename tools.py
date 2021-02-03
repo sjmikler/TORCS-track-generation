@@ -4,6 +4,7 @@ import subprocess
 from os import path
 import shutil
 
+import numpy as np
 import pandas as pd
 import pandas.errors
 import logging
@@ -109,6 +110,17 @@ def find_read_race_data(race_basename):
         logging.info(f"Speed data for {race_basename} contained NaN")
         return None
     return results
+
+
+def validate_race_data(race_data, expected_laps):
+    """Make sure that at least one bot was able to finish the race"""
+    if race_data is None:
+        return False
+    performed_laps = race_data.groupby("driver_id").lap.max()
+    # the race seems to keep going for some time after the final lap even for the last player
+    if np.all(performed_laps < expected_laps + 1):
+        return False
+    return True
 
 
 def generate_configs_from_population(population):
