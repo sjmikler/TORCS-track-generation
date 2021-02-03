@@ -3,6 +3,11 @@
 1. Set up the right flags for your system and torcs installation
 2. Run `python test_run.py --num_races=10`, which should print results of 10 (identical) races
 
+Other flags for `test_run.py`:
+* `--log=INFO|DEBUG`
+* `--track_length=4` number of points for tracks
+* `--track_scale=10` range for generating points
+
 ### Example `flags.py`:
 ```
 TORCS_DIR = "/home/$USER/.torcs/"
