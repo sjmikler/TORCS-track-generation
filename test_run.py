@@ -5,12 +5,16 @@ import time
 import os
 import argparse
 import numpy as np
+import logging
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--num_races", type=int, default=1)
 parser.add_argument("--track_length", type=int, default=4)
 parser.add_argument("--track_scale", type=int, default=10)
+parser.add_argument("--log", type=str, default='NOTSET')
 args = parser.parse_args()
+
+logging.basicConfig(level=args.log)
 
 with open(flags.RACE_CONFIG, "r") as f:
     race_config = f.read()
@@ -25,3 +29,4 @@ tt = time.time() - t
 for i, r in enumerate(results):
     print(f"{i}: {r}")
 print(f"Time taken: {tt:.2f}s ({tt/args.num_races:.2f}s per race)")
+tools.clear_temp_logs()

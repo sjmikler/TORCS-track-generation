@@ -2,11 +2,15 @@ import os
 import re
 import subprocess
 from os import path
+import shutil
 
 import pandas as pd
+import pandas.errors
+import logging
 
 import flags
 import tools_bezier
+import tools_evolution
 
 
 def avg(x):
@@ -14,21 +18,33 @@ def avg(x):
     return sum(x) / len(x) if len(x) else 0
 
 
-def find_file(results_dir, race_basename):
-    """Return latest xml log in folder `race_basename`"""
+def clear_temp_logs():
+    """Our logs might take A LOT of disk space, it is important to clear them."""
 
-    exact_dir = path.join(results_dir, race_basename)
+    logging.info("Clearing logs...")
+    for fname in os.listdir(flags.RESULTS_DIR):
+        if fname.startswith("temp_config"):
+            fullpath = path.join(flags.RESULTS_DIR, fname)
+            shutil.rmtree(fullpath)
+
+
+def find_final_results(race_basename):
+    """Return latest xml `results` log"""
+
+    exact_dir = path.join(flags.RESULTS_DIR, race_basename)
     logs = os.listdir(exact_dir)
     logs = [l for l in logs if l.startswith("results")]
+    if not logs:
+        logging.info(f"No FINAL logs found for {race_basename}...")
+        return None
     latest_log = max(logs)  # maximal should be the latest
     with open(path.join(exact_dir, latest_log), "r") as f:
         result = f.read()
     return result
 
 
-def read_results(xml_result_content):
-    """Read basic things from xml log.
-    To be improved, depending of our needs..."""
+def read_final_results(xml_result_content):
+    """Read basic things from xml results log"""
 
     results = {}
     lap_time = re.findall(
@@ -51,60 +67,48 @@ def read_results(xml_result_content):
     return results
 
 
-def find_read_results(results_dir, race_basename):
-    xml_result_content = find_file(results_dir, race_basename)
-    return read_results(xml_result_content)
+def find_read_final_results(race_basename):
+    xml_result_content = find_final_results(race_basename)
+    return read_final_results(xml_result_content) if xml_result_content else None
 
 
-def find_read_data(results_dir, race_basename):
-    """Find and read the data generated during the race"""
-    exact_dir = path.join(results_dir, race_basename)
+def find_race_data(race_basename):
+    """Find the data generated during the race"""
+    exact_dir = path.join(flags.RESULTS_DIR, race_basename)
     logs = os.listdir(exact_dir)
     logs = [l for l in logs if l.startswith("data")]
+    if not logs:
+        logging.info(f"No RACE logs found for {race_basename}...")
+        return None
     latest_log = max(logs)  # maximal should be the latest
-    data = pd.read_csv(path.join(exact_dir, latest_log), index_col=False)
+    try:
+        data = pd.read_csv(path.join(exact_dir, latest_log), index_col=False)
+    except (pd.errors.EmptyDataError, pd.errors.ParserError):
+        logging.info(f"Empty or corrupted DataFrame found for {race_basename}...")
+        return None
     return data
 
 
-def run_races_read_results(xml_config_paths):
-    """Run many races at once (multiprocessing) and output results."""
+def read_race_data(race_data):
+    """Read entropy data from race results log"""
+    results = {}
+    speed_entropy = tools_evolution.speed_entropy(race_data)
+    if speed_entropy is None:
+        return None
+    results["speed_entropy"] = speed_entropy
+    return results
 
-    processes = []
-    for config_path in xml_config_paths:
-        with open(config_path, "r") as f:
-            f.read()
 
-        process = subprocess.Popen(
-            args=[flags.TORCS_EXEC, "-r", config_path],
-            cwd=flags.TORCS_DIR,
-            stderr=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-        )
-        processes.append(process)
-
-    timed_out = []
-    for idx, process in enumerate(processes):
-        try:
-            process.wait(timeout=4)
-        except subprocess.TimeoutExpired:
-            print("RACE TIMEOUT!")
-            timed_out.append(idx)
-            process.terminate()
-
-    all_results = []
-    for idx, config_path in enumerate(xml_config_paths):
-        if idx in timed_out:
-            all_results.append({"timeout": True})
-            continue
-
-        basename = path.basename(config_path)
-        if basename.endswith(".xml"):
-            basename = basename[:-4]
-
-        results = find_read_results(flags.RESULTS_DIR, basename)
-        results["timeout"] = False
-        all_results.append(results)
-    return all_results
+def find_read_race_data(race_basename):
+    """Find and read the data generated during the race"""
+    race_data = find_race_data(race_basename)
+    if race_data is None:
+        return None
+    results = read_race_data(race_data)
+    if results is None:
+        logging.info(f"Speed data for {race_basename} contained NaN")
+        return None
+    return results
 
 
 def generate_configs_from_population(population):
@@ -148,6 +152,59 @@ def generate_configs_from_population(population):
         xml_config_paths.append(new_race_config_path)
 
     for process in processes:
+        logging.debug(f"CREATING CONFIG FOR RACE {idx:^5}...")
         process.wait(timeout=4)
-        print("trackgen STDERR:", process.stderr.read())
+        logging.info(f"trackgen STDERR: {process.stderr.read()}")
     return xml_config_paths
+
+
+def run_races_read_results(xml_config_paths):
+    """Run many races at once (multiprocessing) and output results."""
+
+    processes = []
+    for config_path in xml_config_paths:
+        with open(config_path, "r") as f:
+            f.read()
+
+        process = subprocess.Popen(
+            args=[flags.TORCS_EXEC, "-r", config_path],
+            cwd=flags.TORCS_DIR,
+            stderr=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+        )
+        processes.append(process)
+
+    timed_out = []
+    for idx, process in enumerate(processes):
+        try:
+            logging.debug(f"WAITING FOR RACE {idx:^5}...")
+            process.wait(timeout=4)
+        except subprocess.TimeoutExpired:
+            logging.info(f"RACE {idx:^5} TIMEOUT!")
+            timed_out.append(idx)
+            process.terminate()
+
+    all_results = []
+    for idx, config_path in enumerate(xml_config_paths):
+        logging.debug(f"READING RESULTS OF RACE {idx:^5}...")
+        if idx in timed_out:
+            all_results.append({"timeout": True})
+            continue
+
+        basename = path.basename(config_path)
+        if basename.endswith(".xml"):
+            basename = basename[:-4]
+
+        final_results = find_read_final_results(basename)
+        race_results = find_read_race_data(basename)
+
+        if final_results is None or race_results is None:
+            logging.info(f"RACE {idx:^5} MISSING!")
+            all_results.append({"missing": True})
+            continue
+
+        results = {**final_results, **race_results}
+        results["timeout"] = False
+        results["missing"] = False
+        all_results.append(results)
+    return all_results
