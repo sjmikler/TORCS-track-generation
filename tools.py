@@ -118,15 +118,16 @@ def generate_configs_from_population(population):
     processes = []
     xml_config_paths = []
     for idx, specimen in enumerate(population):
+        track_name = f"specimen{idx}"
         segments, curves = tools_bezier.get_track(specimen)
         xml = tools_bezier.to_xml(segments, curves)
-        xml = tools_bezier.get_full_xml_track_file(xml)
+        xml = tools_bezier.get_full_xml_track_file(track_name, xml)
 
         new_track_path = path.join(flags.TRACKS_DIR, f"specimen{idx}")
         if not path.exists(new_track_path):
             os.makedirs(new_track_path)
 
-        with open(path.join(new_track_path, f"specimen{idx}.xml"), "w") as f:
+        with open(path.join(new_track_path, f"{track_name}.xml"), "w") as f:
             f.write(xml)
 
         for config_path in xml_config_paths:
@@ -134,7 +135,7 @@ def generate_configs_from_population(population):
                 f.read()
 
         process = subprocess.Popen(
-            args=["trackgen", "-c", "evolution", "-n", f"specimen{idx}"],
+            args=["trackgen", "-c", "evolution", "-n", track_name],
             stderr=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
@@ -142,7 +143,7 @@ def generate_configs_from_population(population):
 
         new_race_config = re.sub(
             '<attstr name="name" val="NAME_PLACEHOLDER"/>',
-            f'<attstr name="name" val="specimen{idx}"/>',
+            f'<attstr name="name" val="{track_name}"/>',
             race_config,
         )
 

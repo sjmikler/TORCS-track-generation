@@ -90,7 +90,7 @@ def translate_curve(curve, K=50):
     return anses
 
 
-def get_full_xml_track_file(xml_ready_segments):
+def get_full_xml_track_file(track_name, xml_ready_segments):
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE params SYSTEM "../../../src/libs/tgf/params.dtd" [
 <!--  general definitions for tracks  -->
@@ -100,14 +100,14 @@ def get_full_xml_track_file(xml_ready_segments):
 <params name="test" type="param" mode="mw">
   <section name="Surfaces">&default-surfaces;</section>
   <section name="Header">
-    <attstr name="name" val="template" />
-    <attstr name="category" val="tracks" />
+    <attstr name="name" val="{track_name}" />
+    <attstr name="category" val="evolution" />
     <attnum name="version" val="4" />
     <attstr name="author" val="Evolution" />
     <attstr name="description" val="Extremaly Cool Track" />
   </section>
   <section name="Graphic">
-    <attstr name="3d description" val="template.ac" />
+    <attstr name="3d description" val="{track_name}.ac" />
     <section name="Terrain Generation">
       <attnum name="track step" unit="m" val="20" />
       <attnum name="border margin" unit="m" val="50" />
