@@ -55,12 +55,11 @@ def polynomial_mutation(x, x_min, x_max, p, eta):
     return y
 
 
-def roulette_selection(x, scores, n_children):
-    p = scores - scores.min()
-    ps = p.sum()
-    if ps == 0:
+def roulette_selection(scores, n_children):
+    s = scores.sum()
+    if s == 0:
         p = np.full_like(scores, 1 / scores.shape[0])
     else:
-        p /= ps
-    indices = np.random.choice(x.shape[0], n_children, replace=True, p=p)
-    return x[indices]
+        p = scores / s
+    indices = np.random.choice(scores.shape[0], n_children, replace=True, p=p)
+    return indices
