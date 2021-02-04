@@ -38,8 +38,10 @@ def polynomial_mutation(x, x_min, x_max, p, eta):
     y = x.copy()
     mask = np.random.random(x.shape) < p
     x = x[mask]
-    x_min = x_min[mask]
-    x_max = x_max[mask]
+    if isinstance(x_min, np.ndarray):
+        x_min = x_min[mask]
+    if isinstance(x_max, np.ndarray):
+        x_max = x_max[mask]
 
     u = np.random.random(x.shape)
     delta = np.where(
