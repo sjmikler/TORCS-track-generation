@@ -1,11 +1,11 @@
-import tools
-import flags
-from os import path
-import time
-import os
 import argparse
-import numpy as np
 import logging
+import time
+
+import numpy as np
+
+import flags
+import tools
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--num_races", type=int, default=1)

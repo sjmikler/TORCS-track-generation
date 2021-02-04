@@ -1,13 +1,13 @@
+import logging
 import os
 import re
+import shutil
 import subprocess
 from os import path
-import shutil
 
 import numpy as np
 import pandas as pd
 import pandas.errors
-import logging
 
 import flags
 import tools_bezier
@@ -107,7 +107,7 @@ def find_read_race_data(race_basename):
         return None
     results = read_race_data(race_data)
     if results is None:
-        logging.info(f"Speed data for {race_basename} contained NaN")
+        logging.info(f"Speed data for {race_basename} contained NaN...")
         return None
     return results
 
@@ -164,10 +164,12 @@ def generate_configs_from_population(population):
             f.write(new_race_config)
         xml_config_paths.append(new_race_config_path)
 
-    for process in processes:
+    for idx, process in enumerate(processes):
         logging.debug(f"CREATING CONFIG FOR RACE {idx:^5}...")
         process.wait(timeout=4)
-        logging.info(f"trackgen STDERR: {process.stderr.read()}")
+        err = process.stderr.read()
+        if err:
+            logging.info(f"trackgen STDERR: {err}")
     return xml_config_paths
 
 
@@ -192,6 +194,9 @@ def run_races_read_results(xml_config_paths):
         try:
             logging.debug(f"WAITING FOR RACE {idx:^5}...")
             process.wait(timeout=4)
+            err = process.stderr.read()
+            if err:
+                logging.info(f"torcs STDERR: {err}")
         except subprocess.TimeoutExpired:
             logging.info(f"RACE {idx:^5} TIMEOUT!")
             timed_out.append(idx)
