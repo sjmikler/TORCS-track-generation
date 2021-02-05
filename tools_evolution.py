@@ -31,8 +31,8 @@ class Evolution:
         children = []
         for i, j in zip(parents[:self.n_children // 2], parents[self.n_children // 2:]):
             c1, c2 = single_point_crossover(self.population[i], self.population[j])
-            c1 = polynomial_mutation(c1, 0, 100, self.p_mutation, self.eta_mutation)
-            c2 = polynomial_mutation(c2, 0, 100, self.p_mutation, self.eta_mutation)
+            c1 = polynomial_mutation(c1, 0, self.track_scale, self.p_mutation, self.eta_mutation)
+            c2 = polynomial_mutation(c2, 0, self.track_scale, self.p_mutation, self.eta_mutation)
             children.append(c1)
             children.append(c2)
 
@@ -68,9 +68,13 @@ def bin_entropy(a, bins=16, range=None):
     :param range: range of possible values, passed to np.histogram
     """
 
-    p, _ = np.histogram(a, bins=bins, range=range, density=True)
-    p1 = p[p > 0.]
-    return -np.sum(p1 * np.log2(p1))
+    p, _ = np.histogram(a, bins=bins, range=range)
+    p1 = p[p > 0]
+    if len(p1) > 0:
+        p1 = p1 / p1.sum()
+        return -np.sum(p1 * np.log2(p1))
+    else:
+        return 0.
 
 
 def speed_entropy(race_data, n_laps=4):
