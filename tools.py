@@ -132,12 +132,12 @@ def generate_configs_from_population(population):
     processes = []
     xml_config_paths = []
     for idx, specimen in enumerate(population):
-        track_name = f"specimen{idx}"
+        track_name = f"specimen{idx:03}"
         segments, curves = tools_bezier.get_track(specimen)
         xml = tools_bezier.to_xml(segments, curves)
         xml = tools_bezier.get_full_xml_track_file(track_name, xml)
 
-        new_track_path = path.join(flags.TRACKS_DIR, f"specimen{idx}")
+        new_track_path = path.join(flags.TRACKS_DIR, track_name)
         if not path.exists(new_track_path):
             os.makedirs(new_track_path)
 
