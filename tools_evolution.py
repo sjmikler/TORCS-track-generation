@@ -60,15 +60,15 @@ class Evolution:
         tools.generate_configs_from_population(self.population.reshape(n, -1, 2))
 
 
-def bin_entropy(a, bins=16, range=None):
+def bin_entropy(a, bins=16, range=None, weights=None):
     """Calculate entropy from bins, the same is done in the paper
-
     :param a: Input data
     :param bins: int or sequence, passed to np.histogram
     :param range: range of possible values, passed to np.histogram
+    :param range: weights of input values, passed to np.histogram
     """
 
-    p, _ = np.histogram(a, bins=bins, range=range)
+    p, _ = np.histogram(a, bins=bins, range=range, weights=weights)
     p1 = p[p > 0]
     if len(p1) > 0:
         p1 = p1 / p1.sum()
