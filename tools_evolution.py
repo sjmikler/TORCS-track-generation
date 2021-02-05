@@ -6,10 +6,11 @@ import tools
 class Evolution:
     """Single objective evolution"""
 
-    def __init__(self, n_population: int, n_children: int, track_length: int, track_scale: float,
+    def __init__(self, n_population: int, n_children: int, n_elite: int, track_length: int, track_scale: float,
                  p_mutation: float, eta_mutation: float, objective="speed_entropy"):
         self.n_population = n_population
         self.n_children = n_children
+        self.n_elite = n_elite
         self.track_length = track_length
         self.track_scale = track_scale
         self.p_mutation = p_mutation
@@ -38,13 +39,12 @@ class Evolution:
 
         children = np.vstack(children)
         children_fitness = evaluate_population(children, self.objective)
-        population = np.vstack([self.population, children])
-        fitness = np.hstack([self.fitness, children_fitness])
 
-        # selection - for now best of (parents + children)
-        best_indices = np.argsort(-fitness)[:self.n_population]
-        self.population = population[best_indices]
-        self.fitness = fitness[best_indices]
+        # selection with elitism
+        best_parents = np.argsort(-self.fitness)[:self.n_elite]
+        best_children = np.argsort(-children_fitness)[:self.n_population - self.n_elite]
+        self.population = np.vstack([self.population[best_parents], children[best_children]])
+        self.fitness = np.hstack([self.fitness[best_parents], children_fitness[best_children]])
 
     def print_fitness_statistics(self):
         print(
