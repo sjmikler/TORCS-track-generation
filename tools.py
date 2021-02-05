@@ -2,10 +2,10 @@ import logging
 import os
 import re
 import shutil
+import signal
 import subprocess
 from os import path
 
-import numpy as np
 import pandas as pd
 import pandas.errors
 
@@ -93,10 +93,13 @@ def find_race_data(race_basename):
 def read_race_data(race_data):
     """Read entropy data from race results log"""
     results = {}
-    speed_entropy = tools_evolution.speed_entropy(race_data)
+    if not validate_race_data(race_data, 3):
+        return {"invalid": True}
+    speed_entropy = tools_evolution.speed_entropy(race_data, 3)
     if speed_entropy is None:
         return None
     results["speed_entropy"] = speed_entropy
+    results["invalid"] = False
     return results
 
 
@@ -116,9 +119,8 @@ def validate_race_data(race_data, expected_laps):
     """Make sure that at least one bot was able to finish the race"""
     if race_data is None:
         return False
-    performed_laps = race_data.groupby("driver_id").lap.max()
     # the race seems to keep going for some time after the final lap even for the last player
-    if np.all(performed_laps < expected_laps + 1):
+    if race_data.lap.max() < expected_laps + 1:
         return False
     return True
 
@@ -186,6 +188,7 @@ def run_races_read_results(xml_config_paths):
             cwd=flags.TORCS_DIR,
             stderr=subprocess.PIPE,
             stdout=subprocess.PIPE,
+            preexec_fn=os.setsid,
         )
         processes.append(process)
 
@@ -200,7 +203,8 @@ def run_races_read_results(xml_config_paths):
         except subprocess.TimeoutExpired:
             logging.info(f"RACE {idx:^5} TIMEOUT!")
             timed_out.append(idx)
-            process.terminate()
+            pgid = os.getpgid(process.pid)
+            os.killpg(pgid, signal.SIGTERM)
 
     all_results = []
     for idx, config_path in enumerate(xml_config_paths):
