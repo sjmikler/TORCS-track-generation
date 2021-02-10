@@ -1,0 +1,10 @@
+{
+    "n_population": 30,
+    "n_children": 30,
+    "n_elite": 3,
+    "track_length": 10,
+    "track_scale": 10,
+    "p_mutation": 0.1,
+    "eta_mutation": 20,
+    "objective": "speed_entropy"
+}
