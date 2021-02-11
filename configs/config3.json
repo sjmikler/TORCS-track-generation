@@ -7,5 +7,5 @@
     "p_mutation": 0.15,
     "eta_mutation": 20,
     "intersection_penalty": 0.5,
-    "objective": "speed_entropy"
+    "objective": "curve_entropy"
 }

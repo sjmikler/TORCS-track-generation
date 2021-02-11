@@ -164,7 +164,7 @@ def evaluate_population(population, objective="speed_entropy"):
     results = tools.run_races_read_results(xml_config_paths)
 
     scores = []
-    for r in results:
+    for i, r in enumerate(results):
         if (
                 "timeout" not in r
                 or "missing" not in r
@@ -175,6 +175,9 @@ def evaluate_population(population, objective="speed_entropy"):
         ):
             scores.append(0)
         else:
-            scores.append(r[objective])
+            if objective == "curve_entropy":
+                scores.append(curves_entropy(population[i].reshape(-1, 2)))
+            else:
+                scores.append(r[objective])
     tools.clear_temp_logs()
     return np.array(scores)
