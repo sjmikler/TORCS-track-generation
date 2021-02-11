@@ -1,3 +1,5 @@
+from functools import reduce
+
 import bezier
 import matplotlib.pyplot as plt
 import numpy as np
@@ -302,6 +304,62 @@ def to_xml(segments, curves):
                 id += 1
 
     return res
+
+
+def get_intersection_count(segments, curves, debug=False):
+    def two_curves(fst, snd):
+        intersections = fst.intersect(snd)
+        if len(intersections[0, :]) > 0:
+            s_vals = np.concatenate((intersections[0, :], intersections[1, :]))
+            # print(s_vals)
+            for i in s_vals:
+                if i != 0 and i != 1:
+                    return True
+        return False
+
+    def segment_to_curve(bg, en):
+        nodes = np.asfortranarray([
+            [bg[0], en[0]],
+            [bg[1], en[1]]
+        ])
+        return bezier.Curve(nodes, degree=1)
+
+    def self_cross(curve):
+        parts = 100
+        pt = np.linspace(0, 1, parts + 1)
+        mini_curves = [curve.specialize(a, b) for (a, b) in zip(pt, pt[1:])]
+        y = len(mini_curves)
+        for i in range(y):
+            for j in range(i + 1, y):
+                if two_curves(mini_curves[i], mini_curves[j]): return True
+        return False
+
+    cnts = 0
+
+    pts = reduce(lambda a, b: a + b, [[(s[0][0], s[0][1]), (s[1][0], s[1][1])] for s in segments], [])
+    pts_set = set(pts)
+
+    if len(pts_set) != len(pts): cnts += (len(pts) - len(pts_set))
+
+    sgms = list(map(lambda s: segment_to_curve(s[0], s[1]), segments))
+    all_parts = sgms + curves
+
+    for c in curves:
+        if self_cross(c):
+            if debug: draw_track([], [c])
+            # return True
+            cnts += 1
+
+    for i in range(len(all_parts)):
+        for j in range(i + 1, len(all_parts)):
+            s = all_parts[i]
+            t = all_parts[j]
+            if two_curves(s, t):
+                if debug: draw_track([], [s, t])
+                # return True
+                cnts += 1
+
+    return cnts
 
 
 def get_curve_stats(curve, K = 50):

@@ -1,13 +1,14 @@
 import numpy as np
 
 import tools
-from tools_bezier import get_track, get_track_stats
+from tools_bezier import get_track, get_intersection_count, get_track_stats
+
 
 class Evolution:
     """Single objective evolution"""
 
     def __init__(self, n_population: int, n_children: int, n_elite: int, track_length: int, track_scale: float,
-                 p_mutation: float, eta_mutation: float, objective="speed_entropy"):
+                 p_mutation: float, eta_mutation: float, intersection_penalty: float, objective="speed_entropy"):
         self.n_population = n_population
         self.n_children = n_children
         self.n_elite = n_elite
@@ -15,6 +16,7 @@ class Evolution:
         self.track_scale = track_scale
         self.p_mutation = p_mutation
         self.eta_mutation = eta_mutation
+        self.intersection_penalty = intersection_penalty
         self.objective = objective
         self.population = np.array([])
         self.fitness = np.array([])
@@ -22,7 +24,7 @@ class Evolution:
 
     def initialize(self):
         self.population = np.random.rand(self.n_population, self.track_length * 2) * self.track_scale
-        self.fitness = evaluate_population(self.population, self.objective)
+        self.fitness = self._evaluate(self.population)
         self.generation = 0
 
     def step(self):
@@ -38,13 +40,18 @@ class Evolution:
             children.append(c2)
 
         children = np.vstack(children)
-        children_fitness = evaluate_population(children, self.objective)
+        children_fitness = self._evaluate(children)
 
         # selection with elitism
         best_parents = np.argsort(-self.fitness)[:self.n_elite]
         best_children = np.argsort(-children_fitness)[:self.n_population - self.n_elite]
         self.population = np.vstack([self.population[best_parents], children[best_children]])
         self.fitness = np.hstack([self.fitness[best_parents], children_fitness[best_children]])
+
+    def _evaluate(self, population):
+        fitness = evaluate_population(population, self.objective)
+        intersections = intersection_counts(population)
+        return fitness - self.intersection_penalty * intersections
 
     def print_fitness_statistics(self):
         print(
@@ -53,7 +60,7 @@ class Evolution:
 
     def print_specimen_fitness(self):
         for i, score in enumerate(self.fitness):
-            print(f"specimen{i}: {score:6.3f}")
+            print(f"specimen{i:03}: {score:6.3f}")
 
     def save_population(self, prefix=None):
         n = self.population.shape[0]
@@ -65,7 +72,7 @@ def bin_entropy(a, bins=16, range=None, weights=None):
     :param a: Input data
     :param bins: int or sequence, passed to np.histogram
     :param range: range of possible values, passed to np.histogram
-    :param range: weights of input values, passed to np.histogram
+    :param weights: weights of input values, passed to np.histogram
     """
 
     p, _ = np.histogram(a, bins=bins, range=range, weights=weights)
@@ -86,6 +93,7 @@ def speed_entropy(race_data, n_laps=4):
     # equal size bins for now, ignore very low and very high speeds
     return bin_entropy(speed, bins=16, range=(10, 90))
 
+
 def curves_entropy(points):
     segments, curves = get_track(points)
     turns, lengths = get_track_stats(segments, curves)
@@ -96,6 +104,7 @@ def curves_entropy(points):
             0.005, 0.01, 0.02, 0.05, 0.1, 0.25, 0.5, 1, 1.5, 2, 3, 4, 5, 7, np.inf]
 
     return bin_entropy(turns, bins, range=None, weights=lengths)
+
 
 def single_point_crossover(x1, x2):
     y1 = x1.copy()
@@ -139,6 +148,14 @@ def roulette_selection(scores, n_children):
         p = scores / s
     indices = np.random.choice(scores.shape[0], n_children, replace=True, p=p)
     return indices
+
+
+def intersection_counts(population):
+    def eval_specimen(x):
+        segments, curves = get_track(x.reshape(-1, 2))
+        return get_intersection_count(segments, curves)
+
+    return np.apply_along_axis(eval_specimen, 1, population)
 
 
 def evaluate_population(population, objective="speed_entropy"):

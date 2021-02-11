@@ -21,6 +21,8 @@ def main(args):
         evolution.step()
         evolution.print_fitness_statistics()
     evolution.save_population()
+    print("Final fitness:")
+    evolution.print_specimen_fitness()
 
 
 if __name__ == '__main__':
