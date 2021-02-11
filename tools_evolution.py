@@ -1,7 +1,7 @@
 import numpy as np
 
 import tools
-
+from tools_bezier import get_track, get_track_stats
 
 class Evolution:
     """Single objective evolution"""
@@ -86,6 +86,16 @@ def speed_entropy(race_data, n_laps=4):
     # equal size bins for now, ignore very low and very high speeds
     return bin_entropy(speed, bins=16, range=(10, 90))
 
+def curves_entropy(points):
+    segments, curves = get_track(points)
+    turns, lengths = get_track_stats(segments, curves)
+    length = sum(lengths)
+    turns = np.array(turns)
+    lengths = np.array(lengths) / length
+    bins = [-np.inf, -7, -5, -4, -3, -2, -1.5, -1, -0.5, -0.25, -0.1, -0.05, -0.02, -0.01, -0.005,
+            0.005, 0.01, 0.02, 0.05, 0.1, 0.25, 0.5, 1, 1.5, 2, 3, 4, 5, 7, np.inf]
+
+    return bin_entropy(turns, bins, range=None, weights=lengths)
 
 def single_point_crossover(x1, x2):
     y1 = x1.copy()

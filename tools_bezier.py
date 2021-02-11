@@ -302,3 +302,61 @@ def to_xml(segments, curves):
                 id += 1
 
     return res
+
+
+def get_curve_stats(curve, K = 50):
+    vecs = []
+    vals = []
+    turns = []
+    lengths = []
+    for i in np.linspace(0,1, K + 1):
+        t = curve.evaluate_hodograph(i)
+        tp = np.array([t[1], -t[0]])
+        vecs += [tp]
+        v = curve.evaluate(i)
+        vals += [v]
+
+    for i in range(K):
+        start_pos = vals[i]
+        end_pos = vals[i+1]
+        start_vec = vecs[i]
+        end_vec = vecs[i+1]
+
+        cut = curve.specialize(i / K, (i + 1) / K)
+
+        m = np.concatenate([start_vec, end_vec], axis=1)
+        ans = np.linalg.inv(m) @ (end_pos - start_pos)
+
+        d = np.linalg.det(m)
+
+        p = start_pos + ans[0,0] * start_vec
+
+        v1 = p - start_pos
+        v2 = p - end_pos
+
+        r1 = np.linalg.norm(v1)
+        r2 = np.linalg.norm(v2)
+
+
+        if max(-1, min(1, v1.T.dot(v2)[0][0] / (r1 * r2))) == 1:
+            turns.append(0)
+            lengths.append(np.linalg.norm(start_pos - end_pos))
+        else:
+            turns.append(1 / ((r1 + r2) / 2) * np.sign(d))
+            lengths.append(cut.length)
+
+    return turns, lengths
+
+
+def get_track_stats(segments, curves):
+    turns = []
+    lengths = []
+    for s in segments:
+        turns.append(0)
+        lengths.append(get_len(s))
+    for c in curves:
+        t, l = get_curve_stats(c)
+        turns += t
+        lengths += l
+
+    return turns, lengths
