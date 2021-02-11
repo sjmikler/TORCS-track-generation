@@ -179,32 +179,39 @@ def run_races_read_results(xml_config_paths):
     """Run many races at once (multiprocessing) and output results."""
 
     processes = []
-    for config_path in xml_config_paths:
-        with open(config_path, "r") as f:
-            f.read()
+    try:
+        for config_path in xml_config_paths:
+            with open(config_path, "r") as f:
+                f.read()
 
-        process = subprocess.Popen(
-            args=[flags.TORCS_EXEC, "-r", config_path],
-            cwd=flags.TORCS_DIR,
-            stderr=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            preexec_fn=os.setsid,
-        )
-        processes.append(process)
+            process = subprocess.Popen(
+                args=[flags.TORCS_EXEC, "-r", config_path],
+                cwd=flags.TORCS_DIR,
+                stderr=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                preexec_fn=os.setsid,
+            )
+            processes.append(process)
 
-    timed_out = []
-    for idx, process in enumerate(processes):
-        try:
-            logging.debug(f"WAITING FOR RACE {idx:^5}...")
-            process.wait(timeout=4)
-            err = process.stderr.read()
-            if err:
-                logging.info(f"torcs STDERR: {err}")
-        except subprocess.TimeoutExpired:
-            logging.info(f"RACE {idx:^5} TIMEOUT!")
-            timed_out.append(idx)
-            pgid = os.getpgid(process.pid)
-            os.killpg(pgid, signal.SIGTERM)
+        timed_out = []
+        for idx, process in enumerate(processes):
+            try:
+                logging.debug(f"WAITING FOR RACE {idx:^5}...")
+                process.wait(timeout=5)
+                err = process.stderr.read()
+                if err:
+                    logging.info(f"torcs STDERR: {err}")
+            except subprocess.TimeoutExpired:
+                logging.info(f"RACE {idx:^5} TIMEOUT!")
+                timed_out.append(idx)
+                pgid = os.getpgid(process.pid)
+                os.killpg(pgid, signal.SIGTERM)
+    except:
+        for process in processes:
+            if process.poll() is None:
+                pgid = os.getpgid(process.pid)
+                os.killpg(pgid, signal.SIGTERM)
+        raise
 
     all_results = []
     for idx, config_path in enumerate(xml_config_paths):
