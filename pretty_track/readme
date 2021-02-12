@@ -1,0 +1,3 @@
+Copy OK directory to /where/you/have/torcs/tracks/road/OK
+
+trackgen -c road -n OK -a
