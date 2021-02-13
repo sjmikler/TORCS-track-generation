@@ -161,6 +161,7 @@ def generate_configs_from_population(population):
             race_config,
         )
 
+        os.makedirs(path.join(os.getcwd(), "temp"), exist_ok=True)
         new_race_config_path = path.join(os.getcwd(), "temp", f"temp_config{idx}.xml")
         with open(new_race_config_path, "w") as f:
             f.write(new_race_config)
