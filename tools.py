@@ -125,7 +125,7 @@ def validate_race_data(race_data, expected_laps):
     return True
 
 
-def generate_configs_from_population(population):
+def generate_configs_from_population(population, trackgen_with_a=False):
     with open(flags.RACE_CONFIG, "r") as f:
         race_config = f.read()
 
@@ -148,8 +148,11 @@ def generate_configs_from_population(population):
             with open(config_path, "r") as f:
                 f.read()
 
+        trackgen_args = ["trackgen", "-c", "evolution", "-n", track_name]
+        if trackgen_with_a:
+            trackgen_args.append("-a")
         process = subprocess.Popen(
-            args=["trackgen", "-c", "evolution", "-n", track_name],
+            args=trackgen_args,
             stderr=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
