@@ -8,7 +8,7 @@ class Evolution:
     """Single objective evolution"""
 
     def __init__(self, n_population: int, n_children: int, n_elite: int, track_length: int, track_scale: float,
-                 p_mutation: float, eta_mutation: float, intersection_penalty: float, objective="speed_entropy"):
+                 p_mutation: float, eta_mutation: float, intersection_penalty: float, too_tight_corner_penalty: float, objective="speed_entropy"):
         self.n_population = n_population
         self.n_children = n_children
         self.n_elite = n_elite
@@ -17,6 +17,7 @@ class Evolution:
         self.p_mutation = p_mutation
         self.eta_mutation = eta_mutation
         self.intersection_penalty = intersection_penalty
+        self.too_tight_corner_penalty = too_tight_corner_penalty
         self.objective = objective
         self.population = np.array([])
         self.fitness = np.array([])
@@ -51,7 +52,8 @@ class Evolution:
     def _evaluate(self, population):
         fitness = evaluate_population(population, self.objective)
         intersections = intersection_counts(population)
-        return fitness - self.intersection_penalty * intersections
+        return fitness - self.intersection_penalty * intersections -\
+             has_too_tight_corner(population) * self.too_tight_corner_penalty
 
     def print_fitness_statistics(self):
         print(
@@ -154,6 +156,15 @@ def intersection_counts(population):
     def eval_specimen(x):
         segments, curves = get_track(x.reshape(-1, 2))
         return get_intersection_count(segments, curves)
+
+    return np.apply_along_axis(eval_specimen, 1, population)
+
+
+def has_too_tight_corner(population):
+    def eval_specimen(x):
+        segments, curves = get_track(x.reshape(-1, 2))
+        turns, _ = get_track_stats(segments, curves)
+        return 1 if max(turns) > 7 else 0
 
     return np.apply_along_axis(eval_specimen, 1, population)
 
