@@ -194,6 +194,8 @@ def evaluate_population(population, objective="speed_entropy"):
         else:
             if objective == "curve_entropy":
                 scores.append(curves_entropy(population[i].reshape(-1, 2)))
+            elif objective == "combined_entropy":
+                scores.append((curves_entropy(population[i].reshape(-1, 2)) + r["speed_entropy"]) / 2)
             else:
                 scores.append(r[objective])
     tools.clear_temp_logs()
