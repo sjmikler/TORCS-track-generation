@@ -22,11 +22,13 @@ class Evolution:
         self.population = np.array([])
         self.fitness = np.array([])
         self.generation = 0
+        self.history = []
 
     def initialize(self):
         self.population = np.random.rand(self.n_population, self.track_length * 2) * self.track_scale
         self.fitness = self._evaluate(self.population)
         self.generation = 0
+        self.history.append(self.population.copy())
 
     def step(self):
         self.generation += 1
@@ -48,6 +50,7 @@ class Evolution:
         best_children = np.argsort(-children_fitness)[:self.n_population - self.n_elite]
         self.population = np.vstack([self.population[best_parents], children[best_children]])
         self.fitness = np.hstack([self.fitness[best_parents], children_fitness[best_children]])
+        self.history.append(self.population.copy())
 
     def _evaluate(self, population):
         fitness = evaluate_population(population, self.objective)
@@ -64,9 +67,12 @@ class Evolution:
         for i, score in enumerate(self.fitness):
             print(f"specimen{i:03}: {score:6.3f}")
 
-    def save_population(self, prefix=None):
+    def generate_population_xmls(self):
         n = self.population.shape[0]
         tools.generate_configs_from_population(self.population.reshape(n, -1, 2))
+
+    def save_population(self, path):
+        np.save(path, self.history)
 
 
 def bin_entropy(a, bins=16, range=None, weights=None):

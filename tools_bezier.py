@@ -92,7 +92,11 @@ def translate_curve(curve, K=50):
     return anses
 
 
-def get_full_xml_track_file(track_name, xml_ready_segments):
+def get_full_xml_track_file(track_name, xml_ready_segments, pit_stop=None):
+    p = '' if pit_stop is None else str(pit_stop)
+    l = '0.0' if pit_stop is None else str(15)
+    w = '0.0' if pit_stop is None else str(5)
+
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE params SYSTEM "../../../src/libs/tgf/params.dtd" [
 <!--  general definitions for tracks  -->
@@ -106,7 +110,7 @@ def get_full_xml_track_file(track_name, xml_ready_segments):
     <attstr name="category" val="evolution" />
     <attnum name="version" val="4" />
     <attstr name="author" val="Evolution" />
-    <attstr name="description" val="Extremaly Cool Track" />
+    <attstr name="description" val="Extremely Cool Track" />
   </section>
   <section name="Graphic">
     <attstr name="3d description" val="{track_name}.ac" />
@@ -117,6 +121,12 @@ def get_full_xml_track_file(track_name, xml_ready_segments):
       <attnum name="border height" unit="m" val="15" />
       <attstr name="orientation" val="clockwise" />
     </section>
+  </section>
+  <section name="Turn Marks">
+    <attnum name="width" unit="m" val="1.0"/>
+    <attnum name="height" unit="m" val="1.0"/>
+    <attnum name="vertical space" unit="m" val="0.0"/>
+    <attnum name="horizontal space" unit="m" val="2.0"/>
   </section>
   <section name="Main Track">
     <attnum name="width" unit="m" val="10.0" />
@@ -162,12 +172,12 @@ def get_full_xml_track_file(track_name, xml_ready_segments):
     <!--End of right part-->
     <section name="Pits">
       <attstr name="side" val="right" />
-      <attstr name="entry" val="" />
-      <attstr name="start" val="" />
-      <attstr name="end" val="" />
-      <attstr name="exit" val="" />
-      <attnum name="length" unit="m" val="0.0" />
-      <attnum name="width" unit="m" val="0.0" />
+      <attstr name="entry" val="{p}" />
+      <attstr name="start" val="{p}" />
+      <attstr name="end" val="{p}" />
+      <attstr name="exit" val="{p}" />
+      <attnum name="length" unit="m" val="{l}" />
+      <attnum name="width" unit="m" val="{w}" />
     </section>
     <section name="Track Segments">
         {xml_ready_segments}
@@ -177,8 +187,9 @@ def get_full_xml_track_file(track_name, xml_ready_segments):
 """
 
 
-def fill_section_cur(id, left, deg, radius, end_radius):
+def fill_section_cur(id, left, deg, radius, end_radius, first=False):
     w = "rgt" if not left else "lft"
+    m = """<attstr name="marks" val="50"/>""" if first else ''
     return f"""
 <section name="curve {id}">
     <attstr name="type" val="{w}" />
@@ -188,6 +199,7 @@ def fill_section_cur(id, left, deg, radius, end_radius):
     <attnum name="z start" unit="m" val="0.0" />
     <attnum name="z end" unit="m" val="0.0" />
     <attstr name="surface" val="asphalt2-lines" />
+    {m}
     <!--Left part of segment-->
     <section name="Left Side">
         <attnum name="start width" unit="m" val="4.0" />
@@ -287,8 +299,14 @@ def get_len(s):
 def to_xml(segments, curves):
     res = ""
     id = 0
+    longest_straight = -1
+    where = 0
     for i in range(len(segments)):
-        res += fill_section_str(id, get_len(segments[i]) * 100)
+        l = get_len(segments[i]) * 100
+        res += fill_section_str(id, l)
+        if longest_straight < l:
+            longest_straight = l
+            where = id
         id += 1
         anses = translate_curve(curves[i], 100)
 
@@ -296,14 +314,16 @@ def to_xml(segments, curves):
             ans = anses[j]
             if ans[0] == "Arc":
                 r1, r2, arc, left = ans[1:]
-                res += fill_section_cur(id, left, arc, 100 * r1, 100 * r2)
+                res += fill_section_cur(id, left, arc, 100 * r1, 100 * r2, j==0)
                 id += 1
             else:
                 (length,) = ans[1:]
                 res += fill_section_str(id, length * 100)
                 id += 1
 
-    return res
+    where = None if longest_straight < 100 else "straight " + str(where)
+
+    return res, where
 
 
 def get_intersection_count(segments, curves, debug=False):
