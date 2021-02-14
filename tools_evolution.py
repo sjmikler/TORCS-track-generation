@@ -62,9 +62,12 @@ class Evolution:
         for i, score in enumerate(self.fitness):
             print(f"specimen{i:03}: {score:6.3f}")
 
-    def save_population(self, prefix=None):
+    def generate_population_xmls(self):
         n = self.population.shape[0]
         tools.generate_configs_from_population(self.population.reshape(n, -1, 2))
+
+    def save_population(self, path):
+        np.save(path, self.population)
 
 
 def bin_entropy(a, bins=16, range=None, weights=None):
