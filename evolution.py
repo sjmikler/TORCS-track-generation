@@ -8,7 +8,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", required=True, help="Path to a JSON config file")
     parser.add_argument("-i", "--iterations", type=int, required=True, help="Number of evolution iterations")
-    parser.add_argument("--save-path", help="Where to save the final generation")
+    parser.add_argument("-s", "--save-path", help="Where to save the population")
     return parser.parse_args()
 
 
