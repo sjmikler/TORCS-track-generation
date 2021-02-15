@@ -36,3 +36,5 @@ Before running the evolution:
 2. Prepare a JSON config file containing parameters for the evolution. Example files are provided in the `configs` directory.
 
 Then you can run the script `evolution.py`. You can call `python evolution.py --help` for the list of available options.
+
+**Warning**: be cautious of your disk space when the evolution is running, as some torcs processes fail to exit properly, which may lead to gathering large log files.
