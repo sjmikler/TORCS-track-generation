@@ -18,14 +18,16 @@ def main(args):
     evolution = Evolution(**config)
     evolution.initialize()
     evolution.print_fitness_statistics()
-    for iter_ in range(args.iterations):
-        evolution.step()
-        evolution.print_fitness_statistics()
-    evolution.generate_population_xmls()
-    print("Final fitness:")
-    evolution.print_specimen_fitness()
-    if args.save_path is not None:
-        evolution.save_population(args.save_path)
+    try:
+        for iter_ in range(args.iterations):
+            evolution.step()
+            evolution.print_fitness_statistics()
+        evolution.generate_population_xmls()
+        print("Final fitness:")
+        evolution.print_specimen_fitness()
+    finally:
+        if args.save_path is not None:
+            evolution.save_population(args.save_path)
 
 
 if __name__ == '__main__':
