@@ -28,3 +28,11 @@ The directory `torcs` contains modifications needed to collect some data, as wel
 1. Download the "all-in-one" source package from [the TORCS website](http://torcs.sourceforge.net/index.php?name=Sections&op=viewarticle&artid=3)
 2. Copy the contents of the `torcs` directory into the extracted source code
 3. Follow the installation instructions
+
+# Running the evolution
+
+Before running the evolution:
+1. Set up `flags.py`
+2. Prepare a JSON config file containing parameters for the evolution. Example files are provided in the `configs` directory.
+
+Then you can run the script `evolution.py`. You can call `python evolution.py --help` for the list of available options.
